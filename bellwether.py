@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-import os
+import os, csv
 from pattern.en import parse
 
 ohioTweets = []
@@ -18,8 +18,6 @@ descriptors = ['JJ', 'RB', 'IN']
 
 emotions = []
 candidateEmotions = []
-positive = ['joy', 'trust', 'surprise', 'anticipation']
-negative = ['fear', 'anger', 'sadness', 'disgust']
 
 with open('NRC-emotion-lexicon-wordlevel-alphabetized-v0.92.txt', 'rb') as f:
 	reader = csv.reader(f, delimiter="\t")
@@ -60,8 +58,6 @@ def loadFile(filename):
 			# print content
 
 		loc = checkLocation(geo)
-
-		# checkRetweet(content)
 
 		if loc == True:
 			# print geo
@@ -149,7 +145,7 @@ def checkPhrase(tweet, regex, pos):
 				if len(w) > 1:
 					if 'ing' in w[0]:
 						w[1] = 'VB'
-					if pos in w[1] or pos = '':
+					if pos in w[1] or pos == '':
 						expression = searchString
 						if pos not in descriptors:
 							for i in range(len(splitString), len(words)):
@@ -199,7 +195,7 @@ def checkPhrase(tweet, regex, pos):
 				else:
 					phrases[expression] += 1
 
-def checkCandidateSentiment(name):
+def checkCandidateSentiment(tweet, name):
 	tweetLower = tweet.lower()
 	loc = candidates.index(name)
 	for p in punctuation:
@@ -211,10 +207,10 @@ def checkCandidateSentiment(name):
 		for p in wordsInPost:
 			for e in emotions:
 				if p == e[0]:
-					if p not in candidateEmotions[loc]:
-						candidateEmotions[loc][p] = 1
+					if e[1] not in candidateEmotions[loc]:
+						candidateEmotions[loc][e[1]] = 1
 					else:
-						candidateEmotions[loc][p] += 1
+						candidateEmotions[loc][e[1]] += 1
 
 
 # allFiles = os.listdir('data/prejanuary/')
@@ -241,6 +237,7 @@ for c in toCheck:
 	for t in ohioTweets:
 		if len(t) > 2:
 			checkPhrase(t[2], c[0], c[1])
+			checkRetweet(t[2])
 
 for i in range(0, len(candidates)):
 	p = []
@@ -270,10 +267,14 @@ for i in range(0, len(foundPhrases)):
 	print '-----'
 
 for c in candidates:
-	checkCandidateSentiment(c)
+	for t in ohioTweets:
+		if len(t) > 2:
+			checkCandidateSentiment(t[2], c)
+
 	loc = candidates.index(c)
 	sortedEmotions = sorted(candidateEmotions[loc].items(), key=lambda x: x[1], reverse=True)
-	print c + " greatest emotion: " + sortedEmotions[0][0]
+	print c
+	print sortedEmotions[0]
 
-# print "Number of retweets: " + str(len(retweets))
-# print "Percentage that are retweets: " + str((float(len(retweets))) / float(len(ohioTweets))*100)
+print "Number of retweets: " + str(len(retweets))
+print "Percentage that are retweets: " + str((float(len(retweets))) / float(len(ohioTweets))*100)
