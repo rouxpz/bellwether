@@ -13,7 +13,7 @@ candidates = ['jeb', 'bush', 'carson', 'trump', 'fiorina', 'christie', 'cruz', '
 phrases = {}
 foundPhrases = []
 punctuation = ['.', '!', ';', '?', ':', ',', 'https', ')', '(']
-toCheck = [[' is ', 'JJ'], [' is ', 'NN'], [' is ', 'RB'], [' is ', 'VB'], [' is ', 'DT'], [" wants ", 'NN'], [" wants to ", 'VB'], [" doesn't want to ", 'VB'], [" doesn't want ", 'NN'], [" does ", ''], [" doesn't ", '']]
+toCheck = [[' is ', 'JJ'], [' is ', 'NN'], [' is ', 'RB'], [' is ', 'VB'], [' is ', 'DT'], [" wants ", 'NN'], [" wants to ", 'VB'], [" doesn't want to ", 'VB'], [" doesn't want ", 'NN'], [" does ", ''], [" doesn't ", ''], [' thinks ', '']]
 descriptors = ['JJ', 'RB', 'IN']
 
 emotions = []
@@ -221,23 +221,20 @@ def checkCandidateSentiment(tweet, name):
 # 		loadFile('data/prejanuary/' + a)
 
 for i in range(1, 2):
-	# fn = 'data/twitterdata2016-04-' + str(i).zfill(2) + '.txt'
-	fn = 'data/twitterdata2016-04-19.txt'
+	fn = 'data/twitterdata2016-04-' + str(i).zfill(2) + '.txt'
+	# fn = 'data/twitterdata2016-04-19.txt'
 	if os.path.exists(fn):
 		loadFile(fn)
 
-print "Tweets collected: " + str(len(ohioTweets))
+print "\n*** TWEETS COLLECTED! ***"
+# print "Tweets collected: " + str(len(ohioTweets))
 
-# print "Number of retweets: " + str(len(retweets))
-# for r in retweets:
-# 	print r
-
+print "\n*** RUNNING REGEX ***"
 for c in toCheck:
 	print "checking" + c[0] + "(" + c[1] + ")"
 	for t in ohioTweets:
 		if len(t) > 2:
 			checkPhrase(t[2], c[0], c[1])
-			checkRetweet(t[2])
 
 for i in range(0, len(candidates)):
 	p = []
@@ -255,26 +252,40 @@ for phrase in sortedPhrases:
 		except:
 			continue
 
-for i in range(0, len(foundPhrases)):
-	for f in foundPhrases[i]:
-		try:
-			print f[0] + ": " + str(f[1])
-		except UnicodeEncodeError:
-			print f[0].encode('utf-8') + ": " + str(f[1])
-		except UnicodeDecodeError:
-			print f[0].decode('utf-8') + ": " + str(f[1])
+with open('test-data-analysis.txt', 'w') as fl:
+# with open('prejanuary-data-analysis.txt', 'w') as f:
+	for i in range(0, len(foundPhrases)):
+		for f in foundPhrases[i]:
+			try:
+				fl.write(f[0] + ": " + str(f[1]) + '\n')
+			except UnicodeEncodeError:
+				fl.write(f[0].encode('utf-8') + ": " + str(f[1]) + '\n')
+			except UnicodeDecodeError:
+				fl.write(f[0].decode('utf-8') + ": " + str(f[1]) + '\n')
 
-	print '-----'
+		fl.write('-----\n')
 
+	fl.close()
+
+print "*** DONE WITH REGEX ***"
+
+print "\n*** CHECKING SENTIMENT ***"
 for c in candidates:
+	print "checking sentiment for " + c
 	for t in ohioTweets:
 		if len(t) > 2:
 			checkCandidateSentiment(t[2], c)
 
 	loc = candidates.index(c)
 	sortedEmotions = sorted(candidateEmotions[loc].items(), key=lambda x: x[1], reverse=True)
-	print c
-	print sortedEmotions[0]
+	if len(sortedEmotions) > 0:
+		print c + ": " + str(sortedEmotions[0][0]) + ", " + str(sortedEmotions[0][1])
 
+print "\n*** CHECKING RETWEETS ***"
+for t in ohioTweets:
+	if len(t) > 2:
+		checkRetweet(t[2])
+
+print "Tweets collected: " + str(len(ohioTweets))
 print "Number of retweets: " + str(len(retweets))
 print "Percentage that are retweets: " + str((float(len(retweets))) / float(len(ohioTweets))*100)
