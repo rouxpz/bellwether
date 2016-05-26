@@ -13,8 +13,8 @@ candidates = ['jeb', 'bush', 'carson', 'trump', 'fiorina', 'christie', 'cruz', '
 phrases = {}
 foundPhrases = []
 punctuation = ['.', '!', ';', '?', ':', ',', 'https', ')', '(']
-toCheck = [[' is ', 'JJ'], [' is ', 'NN'], [' is ', 'RB'], [' is ', 'VB'], [' is ', 'DT'], [" wants ", 'NN'], [" wants to ", 'VB'], [" doesn't want to ", 'VB'], [" doesn't want ", 'NN'], [" does ", ''], [" doesn't ", ''], [' thinks ', '']]
-descriptors = ['JJ', 'RB', 'IN']
+toCheck = [[' is ', 'JJ'], [' is ', 'NN'], [' is ', 'RB'], [' is ', 'VB'], [' is ', 'DT'], [' is ', 'IN'], [" wants ", 'NN'], [" wants ", 'DT'], [" wants ", 'IN'], [" wants to ", 'VB'], [" doesn't want to ", 'VB'], [" doesn't want ", 'NN'], [" does ", ''], [" doesn't ", ''], [' thinks ', '']]
+descriptors = ['JJ', 'RB', 'IN', 'DT']
 
 emotions = []
 candidateEmotions = []
@@ -40,8 +40,6 @@ c = cities.read()
 c = c.split('\n')
 for line in c:
 	locations.append(line)
-
-print parse('of')
 
 def loadFile(filename):
 	print "Processing " + filename + "..."
@@ -105,7 +103,7 @@ def checkPhrase(tweet, regex, pos):
 	tweetLower = tweet.lower()
 	expression = ''
 	for p in punctuation:
-		tweetLower = tweetLower.replace(p, ' END ')
+		tweetLower = tweetLower.replace(p, ' END ').replace('#', 'HASH')
 
 	for c in candidates:
 		# phrases = {}
@@ -161,6 +159,9 @@ def checkPhrase(tweet, regex, pos):
 										if len(y) > 1 and y[1] in descriptors:
 											expression += ' '
 											continue
+										elif len(y) > 1 and 'NN' in y[1]:
+											expression += ' '
+											continue
 										else:
 											break
 									else:
@@ -180,6 +181,9 @@ def checkPhrase(tweet, regex, pos):
 										if len(y) > 1 and 'NN' in y[1]:
 											expression += ' '
 											continue
+										elif len(y) > 1 and y[1] in descriptors:
+											expression += ' '
+											continue
 										else:
 											break
 									elif 'NN' in x[1]:
@@ -188,7 +192,7 @@ def checkPhrase(tweet, regex, pos):
 										expression += ' '
 										continue
 
-			expression = expression.strip() #strip whitespace
+			expression = expression.strip().replace('HASH', '#') #strip whitespace & put hashtags back
 			if len(expression) > 1:
 				if expression not in phrases:
 					phrases[expression] = 1
@@ -213,6 +217,9 @@ def checkCandidateSentiment(tweet, name):
 						candidateEmotions[loc][e[1]] += 1
 
 
+
+###SCRIPT STARTS HERE###
+
 # allFiles = os.listdir('data/prejanuary/')
 # # print allFiles
 
@@ -220,14 +227,15 @@ def checkCandidateSentiment(tweet, name):
 # 	if a != ".DS_Store":
 # 		loadFile('data/prejanuary/' + a)
 
-for i in range(1, 2):
+for i in range(1, 31):
 	fn = 'data/twitterdata2016-04-' + str(i).zfill(2) + '.txt'
 	# fn = 'data/twitterdata2016-04-19.txt'
 	if os.path.exists(fn):
 		loadFile(fn)
 
+print "Tweets collected: " + str(len(ohioTweets))
 print "\n*** TWEETS COLLECTED! ***"
-# print "Tweets collected: " + str(len(ohioTweets))
+
 
 print "\n*** RUNNING REGEX ***"
 for c in toCheck:
@@ -252,8 +260,8 @@ for phrase in sortedPhrases:
 		except:
 			continue
 
-with open('test-data-analysis.txt', 'w') as fl:
-# with open('prejanuary-data-analysis.txt', 'w') as f:
+with open('thresholds/data/april-data-analysis.txt', 'w') as fl:
+# with open('allData/data/prejanuary-data-analysis.txt', 'w') as fl:
 	for i in range(0, len(foundPhrases)):
 		for f in foundPhrases[i]:
 			try:
@@ -271,7 +279,7 @@ print "*** DONE WITH REGEX ***"
 
 print "\n*** CHECKING SENTIMENT ***"
 for c in candidates:
-	print "checking sentiment for " + c
+	# print "checking sentiment for " + c
 	for t in ohioTweets:
 		if len(t) > 2:
 			checkCandidateSentiment(t[2], c)
@@ -279,7 +287,8 @@ for c in candidates:
 	loc = candidates.index(c)
 	sortedEmotions = sorted(candidateEmotions[loc].items(), key=lambda x: x[1], reverse=True)
 	if len(sortedEmotions) > 0:
-		print c + ": " + str(sortedEmotions[0][0]) + ", " + str(sortedEmotions[0][1])
+		print c.upper() + " SENTIMENT: "
+		print sortedEmotions
 
 print "\n*** CHECKING RETWEETS ***"
 for t in ohioTweets:
